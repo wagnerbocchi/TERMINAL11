@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wagner Bocchi - </title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'VT323', monospace;
+        }
+
+        body {
+            background: #000;
+            color: #00ff00;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .terminal-container {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            background: rgba(0, 10, 0, 0.9);
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            z-index: 2;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+        }
+
+        .terminal-header {
+            background: #001100;
+            padding: 10px;
+            border-bottom: 2px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .terminal-title {
+            font-size: 1.2em;
+        }
+
+        .terminal-controls span {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+
+        .terminal-content {
+            height: calc(100% - 40px);
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .terminal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terminal-content::-webkit-scrollbar-track {
+            background: #001100;
+        }
+
+        .terminal-content::-webkit-scrollbar-thumb {
+            background: #00ff00;
+            border-radius: 4px;
+        }
+
+        .command-list {
+            list-style: none;
+            padding: 10px;
+        }
+
+        .command-item {
+            padding: 8px 15px;
+            margin: 5px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            font-size:20px
+        }
+
+        .command-item:hover {
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .command-item.selected {
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .command-item::before {
+            content: '>';
+            margin-right: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .command-item.selected::before {
+            opacity: 1;
+        }
+
+        .boot-sequence {
+            padding: 20px;
+            line-height: 1.5;
+            white-space: pre-line;
+            font-size:20px
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .scanline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 255, 0, 0.1);
+            animation: scanline 6s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes scanline {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        .content-section {
+            padding: 20px;
+            line-height: 1.5;
+            white-space: pre-line;
+            font-size:20px
+            
+        }
+
+        .back-button {
+            margin-top: 20px;
+            color: #00ff00;
+            cursor: pointer;
+            display: inline-block;
+            padding: 5px 10px;
+            border: 1px solid #00ff00;
+            transition: all 0.3s ease;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .back-button::before {
+            content: '< ';
+        }
+
+        .typing-effect {
+            border-right: 2px solid #00ff00;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+        /* Add this to your existing CSS */
+.terminal-link {
+    color: #00ff00;
+    text-decoration: underline;
+    cursor: pointer;
+    position: relative;
+    padding: 0 2px;
+}
+
+.terminal-link:hover {
+    background: rgba(0, 255, 0, 0.2);
+    text-decoration: none;
+}
+
+.terminal-link::before {
+    content: '>';
+    position: absolute;
+    left: -15px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.terminal-link:hover::before {
+    opacity: 1;
+}
+    </style>
+</head>
+<body>
+    <canvas id="matrix-bg"></canvas>
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="terminal-title">Wagner Terminal v1.01</div>
+            <div class="terminal-controls">
+                <span style="background: #ff6b6b"></span>
+                <span style="background: #ffd93d"></span>
+                <span style="background: #6bff6b"></span>
+            </div>
+        </div>
+        <div class="scanline"></div>
+        <div class="terminal-content">
+            <div id="boot-sequence" class="boot-sequence"></div>
+            <ul id="command-list" class="command-list hidden">
+                <li class="command-item" data-command="about">ABOUT</li>
+                <li class="command-item" data-command="skills">SKILLS</li>
+                <li class="command-item" data-command="projects">PROJECTS</li>
+                <li class="command-item" data-command="contact">CONTACT</li>
+            </ul>
+            <div id="content-display" class="content-section hidden"></div>
+        </div>
+    </div>
+
+    <script>
+    // Add this to your existing JavaScript
+function initializeLinks() {
+    document.querySelectorAll('.terminal-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            playSound(1200, 'sine');
+            setTimeout(() => {
+                window.open(link.href, '_blank');
+            }, 100);
+        });
+
+        link.addEventListener('mouseover', () => {
+            playSound(800, 'sine');
+        });
+    });
+}
+
+        // Matrix Background
+        const canvas = document.getElementById('matrix-bg');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 50);
+
+        // Terminal Functionality
+        const bootSequence = document.getElementById('boot-sequence');
+        const commandList = document.getElementById('command-list');
+        const contentDisplay = document.getElementById('content-display');
+        let selectedIndex = 0;
+        let isBooting = true;
+        let currentSection = 'main';
+
+        const content = {
+    about: `
+        ABOUT ME
+        ========
+        Hi, I'm Wagner Bocchi, a Pentester, Security Researcher from Brazil.
+
+        Penetration Tester & Security Researcher:
+        - Cisco Certified Ethical Hacker
+        - Ethical Hacking
+        - Penetration Testing 
+        - OSINT Specialist
+        - Cybersecurity Analyst
+        - SQL Injection
+        - XSS Attacks
+        - Social Engineering
+
+        Additional Expertise:
+        - AI Integration
+        - Cloud Architecture
+        - System Design
+
+        I'm passionate about cybersecurity and love to learn new things. I'm always looking for new challenges and opportunities to grow.
+    `,
+    skills: `
+        TECHNICAL SKILLS
+        ===============
+        Frontend Development:
+        - JavaScript/TypeScript
+        - HTML5/CSS3
+
+        
+      
+    `,
+      projects: `FEATURED PROJECTS
+================
+1. E-commerce Solutions
+- Custom WordPress/WooCommerce Development
+- Visit: <a href="https://blaids.com/" class="terminal-link" target="_blank">blaids.com</a>
+- 100K+ Monthly Sales
+
+2. Enterprise WordPress Solution
+- Modern Website
+- Demo: <a href="https://amajuae.com/" class="terminal-link" target="_blank">amajuae.com</a>
+
+
+3.Wordpress Plugins
+- Free Currency Exchanger: <a href="https://wordpress.org/plugins/free-currency-converter/advanced/" class="terminal-link" target="_blank">View Plugin</a>
+- Blogger To WordPress importer: <a href="https://wordpress.org/plugins/import-wizard-blogspot/" class="terminal-link" target="_blank">View Plugin</a>
+
+    `,
+    contact: `CONTACT INFORMATION
+==================
+ Media:
+- Twitter: <a href="https://twitter.com/h4ckerm4n_" class="terminal-link" target="_blank">@h4ckerm4n_</a>
+- GitHub: <a href="https://github.com/wagnerbocchi" class="terminal-link" target="_blank">wagnerbocchi</a>
+- LinkedIn: <a href="https://www.linkedin.com/in/bocchi-hacker/" class="terminal-link" target="_blank">Wagner Bocchi</a>
+- Email: <a href="mailto:wagner@bocchi.dev.br
+       
+ 
+    `
+};
+
+        // Sound Effects
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playSound(frequency, type = 'square') {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+
+            oscillator.start();
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.05);
+            oscillator.stop(audioContext.currentTime + 0.05);
+        }
+
+        // Typing Effect
+        async function typeText(element, text, speed = 50) {
+            const span = document.createElement('span');
+            element.appendChild(span);
+
+            for (let char of text) {
+                span.textContent += char;
+                if (char !== ' ') playSound(500);
+                await new Promise(resolve => setTimeout(resolve, speed));
+            }
+            span.appendChild(document.createElement('br'));
+        }
+
+        // Boot Sequence
+        async function runBootSequence() {
+            const bootText = [
+                'Initializing system',
+                'Loading modules',
+                'Checking dependencies',
+                'Starting terminal',
+                'System ready...',
+                'Use arrow keys or mouse to navigate and Enter to select:'
+            ];
+
+            for (let text of bootText) {
+                await typeText(bootSequence, text);
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
+            isBooting = false;
+            bootSequence.classList.add('hidden');
+            commandList.classList.remove('hidden');
+            updateSelection();
+        }
+
+        function updateSelection() {
+            document.querySelectorAll('.command-item').forEach((item, index) => {
+                item.classList.toggle('selected', index === selectedIndex);
+            });
+        }
+
+        function showContent(command) {
+            if (command === 'exit' && currentSection !== 'main') {
+                currentSection = 'main';
+                contentDisplay.classList.add('hidden');
+                commandList.classList.remove('hidden');
+                return;
+            }
+
+            if (command === 'exit') {
+                return;
+            }
+
+             currentSection = command;
+    commandList.classList.add('hidden');
+    contentDisplay.classList.remove('hidden');
+    contentDisplay.innerHTML = content[command] + '\n\n<div class="back-button">Back to Menu</div>';
+
+    // Initialize links after content is loaded
+    initializeLinks();
+
+    document.querySelector('.back-button').onclick = () => {
+        playSound(600, 'sine');
+        currentSection = 'main';
+        contentDisplay.classList.add('hidden');
+        commandList.classList.remove('hidden');
+    };
+        }
+
+        // Event Listeners
+        document.addEventListener('keydown', (e) => {
+            if (isBooting) return;
+
+            switch (e.key) {
+                case 'ArrowUp':
+                    playSound(800);
+                    selectedIndex = (selectedIndex - 1 + document.querySelectorAll('.command-item').length) % document.querySelectorAll('.command-item').length;
+                    updateSelection();
+                    break;
+                case 'ArrowDown':
+                    playSound(800);
+                    selectedIndex = (selectedIndex + 1) % document.querySelectorAll('.command-item').length;
+                    updateSelection();
+                    break;
+                case 'Enter':
+                    playSound(1000, 'sine');
+                    const selectedCommand = document.querySelectorAll('.command-item')[selectedIndex].dataset.command;
+                    showContent(selectedCommand);
+                    break;
+                case 'Escape':
+                    if (currentSection !== 'main') {
+                        playSound(600, 'sine');
+                        currentSection = 'main';
+                        contentDisplay.classList.add('hidden');
+                        commandList.classList.remove('hidden');
+                    }
+                    break;
+            }
+        });
+
+        // Mouse Interaction
+        document.querySelectorAll('.command-item').forEach((item, index) => {
+            item.addEventListener('mouseover', () => {
+                selectedIndex = index;
+                updateSelection();
+            });
+
+            item.addEventListener('click', () => {
+                playSound(1000, 'sine');
+                const command = item.dataset.command;
+                showContent(command);
+            });
+        });
+
+        // Handle window resize for matrix background
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Start the boot sequence
+        runBootSequence();
+    </script>
+</body>
+</html>
