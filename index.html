@@ -346,7 +346,7 @@ function initializeLinks() {
 - Twitter: <a href="https://twitter.com/h4ckerm4n_" class="terminal-link" target="_blank">@h4ckerm4n_</a>
 - GitHub: <a href="https://github.com/wagnerbocchi" class="terminal-link" target="_blank">wagnerbocchi</a>
 - LinkedIn: <a href="https://www.linkedin.com/in/bocchi-hacker/" class="terminal-link" target="_blank">Wagner Bocchi</a>
-- Email: <a href="mailto:wagner@bocchi.dev.br
+- Email: <a href="mailto:wagner@bocchi.dev.br" class="terminal-link" target="_blank">E-mail</a>
        
  
     `
@@ -397,7 +397,7 @@ function initializeLinks() {
 
             for (let text of bootText) {
                 await typeText(bootSequence, text);
-                await new Promise(resolve => setTimeout(resolve, 300));
+                await new Promise(resolve => setTimeout(resolve, 200));
             }
 
             isBooting = false;
